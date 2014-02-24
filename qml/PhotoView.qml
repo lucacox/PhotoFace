@@ -1,63 +1,85 @@
 import QtQuick 2.0
-import Qt.labs.folderlistmodel 2.0
 
 Item {
     id: photo_view
-    property alias folder: imageModel.folder
 
-    FolderListModel {
-        id: imageModel
-        nameFilters: ["*.jpg", "*.JPG", "*.png"]
-        showDotAndDotDot: false
-        showDirs: false
+    property alias image: img.source
+    property variant rectangles: []
+
+    signal close()
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#DDD"
     }
 
-    Component {
-        id: imageDelegate
-        Item {
-            width: photo_grid.cellWidth
-            height: photo_grid.cellHeight
-            Rectangle {
-                anchors.fill: parent
-                color: photo_grid.currentIndex === index ? "steelblue" : "transparent"
+    Image {
+        id: img
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectFit
 
-                Image {
-                    id: img
-                    source: filePath
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: {
-                        top: 5
-                        bottom: 5
-                        left: 5
-                        right: 5
-                    }
-                    asynchronous: true
-                    height: 200
+        Canvas {
+            id: canvas
+            anchors.centerIn: parent
+            height: parent.paintedHeight
+            width: parent.paintedWidth
+
+            onPaint: {
+                var ctx = canvas.getContext("2d");
+
+                // Store the current transformation matrix
+                ctx.save();
+
+                // Use the identity matrix while clearing the canvas
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Restore the transform
+                ctx.restore();
+
+                var fx = canvas.width / img.sourceSize.width
+                var fy = canvas.height / img.sourceSize.height
+
+                console.log("img size: " + img.sourceSize);
+                console.log("canvas size: " + canvas.width, canvas.height);
+
+                console.log("Fx: " + fx);
+                console.log("Fy: " + fy);
+
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#F00";
+                for (var i=0; i<rectangles.length; i++) {
+                    var rect = rectangles[i].boundingRect;
+                    ctx.rect(rect.x * fx, rect.y * fy, rect.width * fx, rect.height * fy);
+                    ctx.stroke();
                 }
-                Text {
-                    anchors.top: img.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    text: fileName
-                }
+
+
             }
+        }
+
+    }
+
+    Rectangle {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        height: 50
+        color: "transparent"
+        border.width: 1
+        border.color: "black"
+        width: 50
+        Text {
+            anchors.fill: parent
+            text: "X"
+            font.pixelSize: 47
+            horizontalAlignment: Text.Center
+            verticalAlignment: Text.Center
             MouseArea {
                 anchors.fill: parent
                 onClicked: {
-                    photo_grid.currentIndex = index;
+                    photo_view.close();
                 }
             }
         }
-    }
-
-    GridView {
-        id: photo_grid
-        cellHeight: height / 4
-        cellWidth: width / 5
-        anchors.fill: parent
-        delegate: imageDelegate
-        model: imageModel
     }
 }

@@ -38,20 +38,53 @@ ApplicationWindow {
         FolderView {
             id: folderView
             Layout.minimumWidth: 200
-            currentFolder: "/Users/Luca/Pictures/"
-            onCurrentFolderChanged: {
-                console.log(currentFolder);
-            }
+            currentFolder: pictures_folder
         }
         // main view
-        PhotoView {
+        Item {
             Layout.fillWidth: true
-            folder: folderView.currentFolder
+            PhotoListView {
+                id: photo_list
+                anchors.fill: parent
+                visible: true
+                enabled: visible
+                folder: folderView.currentFolder
+                onFolderChanged: {
+                    console.log(folder);
+                }
+
+                onShowPhoto: {
+                    photo_list.visible = false;
+                    photo_view.visible = true;
+                    photo_view.image = file_path;
+
+//                    console.log("stting file: " + file_path);
+//                    recognizer.photoPath = file_path;
+//                    photo_view.rectangles = recognizer.detectFaces();
+                }
+            }
+            PhotoView {
+                id: photo_view
+                anchors.fill: parent
+                visible: false
+                enabled: visible
+
+                onClose: {
+                    photo_view.visible = false;
+                    photo_view.image = "";
+                    photo_list.visible = true;
+                }
+            }
         }
-        // detail panes
-        Rectangle {
-            color: "green"
+
+        Item {
             Layout.minimumWidth: 200
+            FacePanel {
+                id: facepanel
+                anchors.fill: parent
+                filename: photo_list.selectedFile
+
+            }
         }
     }
 
